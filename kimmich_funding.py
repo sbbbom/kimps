@@ -122,6 +122,8 @@ def main():
     print(b)
     sendmessage(b)
 
+
+
 if __name__ == "__main__":   # ← 파일 직접 실행해야 동작
     main()
 
