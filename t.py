@@ -1,23 +1,31 @@
+# diag.py
 import requests
-def main():
-  urls = {
-    "bybit_funding": "https://api.bybit.com/v5/market/funding/history",
-    "manana_fx": "https://api.manana.kr/exchange/rate/KRW/USD.json",
-    "upbit_ticker": "https://api.upbit.com/v1/ticker?markets=KRW-BTC",
-    "binance_price": "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
-}
+from urllib3.util.retry import Retry
+from requests.adapters import HTTPAdapter
 
-  for name, url in urls.items():
-    try:
-        r = requests.get(url, timeout=5)
-        r.raise_for_status()
-        print(f"[OK] {name} 응답 길이: {len(r.text)}")
-    except Exception as e:
-        print(f"[FAIL] {name} → {e}")
+s = requests.Session()
+s.headers.update({"User-Agent": "kimp-bot/1.0"})
+s.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=3, backoff_factor=0.5, status_forcelist=[429,500,502,503,504]
+)))
 
-   
+def check_binance(sym="BTCUSDT"):
+    r = s.get("https://api.binance.com/api/v3/ticker/price",
+              params={"symbol": sym}, timeout=8)
+    print("BIN", r.status_code, r.text[:200])
+
+def check_bybit(sym="BTCUSDT"):
+    r = s.get("https://api.bybit.com/v5/market/funding/history",
+              params={"symbol": sym, "category": "linear", "limit": 1}, timeout=8)
+    print("BYB", r.status_code, r.text[:200])
+
+if __name__ == "__main__":
+    check_binance()
+    check_bybit()
+
 
 
 
 if __name__ == "__main__":   # ← 파일 직접 실행해야 동작
     main()
+
